@@ -1,20 +1,13 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Get API key from environment variables
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 if (!apiKey) {
   throw new Error("VITE_GEMINI_API_KEY is not defined in the environment variables.");
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-/**
- * Generates educational content for a trading chapter using the Gemini API.
- * @param {string} chapterTitle The title of the chapter.
- * @returns {Promise<string>} A promise that resolves to the generated text content.
- */
 export const generateChapterContent = async (chapterTitle) => {
   const systemPrompt = `
     You are an expert trading educator and content creator for a platform called "Trader Quest".

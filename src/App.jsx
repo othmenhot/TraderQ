@@ -11,7 +11,7 @@ import DashboardPage from './pages/DashboardPage';
 import RoadmapPage from './pages/RoadmapPage';
 import ModuleDetailPage from './pages/ModuleDetailPage';
 import ChapterPage from './pages/ChapterPage';
-import AdminPage from './pages/AdminPage'; // <-- Import the new page
+import AdminPage from './pages/AdminPage';
 import ThemeToggle from './components/ui/ThemeToggle';
 
 const HomePage = () => (
@@ -41,7 +41,7 @@ const App = () => {
             <Route path="/roadmap" element={<RoadmapPage />} />
             <Route path="/learn/:pathId/:moduleId" element={<ModuleDetailPage />} />
             <Route path="/learn/:pathId/:moduleId/:chapterId" element={<ChapterPage />} />
-            <Route path="/admin" element={<AdminPage />} /> {/* <-- Add the admin route */}
+            <Route path="/admin" element={<AdminPage />} />
           </Route>
         </Route>
         <Route path="/login" element={<LoginPage />} />

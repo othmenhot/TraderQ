@@ -1,10 +1,7 @@
-import { defineConfig, loadEnv } from 'vite'
+import { defineConfig } from 'vite'
 
-export default defineConfig(({ command, mode }) => {
-  const env = loadEnv(mode, process.cwd(), '')
-  return {
-    define: {
-      'process.env.GOOGLE_API_KEY': JSON.stringify(env.GOOGLE_API_KEY),
-    },
-  }
+// https://vitejs.dev/config/
+export default defineConfig({
+  // We no longer need the 'define' block as we are using
+  // Vite's default mechanism for environment variables (import.meta.env).
 })
