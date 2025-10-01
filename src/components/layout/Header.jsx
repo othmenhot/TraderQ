@@ -32,9 +32,15 @@ const Header = () => {
             <NavLink to="/dashboard" className={navLinkClasses}>
               Dashboard
             </NavLink>
-            <NavLink to="/roadmap" className={navLinkClasses}> {/* <-- Changed */}
+            <NavLink to="/roadmap" className={navLinkClasses}>
               Roadmap
             </NavLink>
+            {/* Add a link to the admin page if user is logged in */}
+            {user && (
+              <NavLink to="/admin" className={navLinkClasses}>
+                Admin
+              </NavLink>
+            )}
           </div>
         </div>
         <div className="flex items-center space-x-4">

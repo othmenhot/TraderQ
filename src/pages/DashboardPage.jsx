@@ -93,7 +93,7 @@ const StartFirstPath = () => (
           <Badge variant="secondary">Foundation</Badge>
           <h4 className="font-semibold mt-2">The Foundations of Trading</h4>
         </div>
-        <Link to="/learn/trader-path">
+        <Link to="/roadmap">
           <Button>Start Learning</Button>
         </Link>
       </div>
