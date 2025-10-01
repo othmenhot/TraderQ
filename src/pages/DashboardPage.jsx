@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { getInProgressModules, getUserBadges } from '../lib/firestoreService';
+import { seedDatabase } from '../lib/seedDatabase';
 import { BADGES } from '../lib/badges';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -9,7 +10,86 @@ import { Badge } from '../components/ui/Badge';
 
 const XP_PER_LEVEL = 100;
 
+// --- Main Component ---
+
+const DashboardPage = () => {
+  const { user, userProfile } = useAuth();
+  const [inProgressModules, setInProgressModules] = useState([]);
+  const [earnedBadges, setEarnedBadges] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      setIsLoading(true);
+      Promise.all([
+        getInProgressModules(user.uid),
+        getUserBadges(user.uid)
+      ]).then(([modules, badges]) => {
+        setInProgressModules(modules);
+        setEarnedBadges(badges);
+      }).catch(error => {
+        console.error("Failed to fetch dashboard data:", error);
+      }).finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const isGuest = user?.isAnonymous;
+
+  const renderMainContent = () => {
+    if (isLoading) {
+      return <Card className="lg:col-span-2 h-48 flex items-center justify-center"><p>Loading your progress...</p></Card>;
+    }
+    if (inProgressModules.length > 0) {
+      return <ContinueLearning modules={inProgressModules} />;
+    }
+    return <StartFirstPath />;
+  };
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold">
+          Welcome back{isGuest ? ", Guest" : ""}!
+        </h1>
+        <p className="text-muted-foreground">
+          Let's continue your journey to becoming a trading master.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {renderMainContent()}
+        <ProfileCard userProfile={userProfile} badges={earnedBadges} />
+      </div>
+      
+      <AdminToolsCard />
+    </div>
+  );
+};
+
 // --- Inner Components ---
+
+const AdminToolsCard = () => {
+  const handleSeedClick = () => {
+    if (window.confirm('Are you sure you want to seed the database? This will overwrite existing data.')) {
+      seedDatabase();
+    }
+  };
+
+  return (
+    <Card className="bg-destructive/10 border-destructive/50">
+      <CardHeader>
+        <CardTitle>Admin Tools</CardTitle>
+        <CardDescription>This is a temporary developer tool. Click to populate Firestore.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Button variant="destructive" onClick={handleSeedClick}>
+          Seed Database
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
 
 const ProfileCard = ({ userProfile, badges }) => (
   <Card>
@@ -100,60 +180,5 @@ const StartFirstPath = () => (
     </CardContent>
   </Card>
 );
-
-// --- Main Component ---
-
-const DashboardPage = () => {
-  const { user, userProfile } = useAuth();
-  const [inProgressModules, setInProgressModules] = useState([]);
-  const [earnedBadges, setEarnedBadges] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (user) {
-      setIsLoading(true);
-      Promise.all([
-        getInProgressModules(user.uid),
-        getUserBadges(user.uid)
-      ]).then(([modules, badges]) => {
-        setInProgressModules(modules);
-        setEarnedBadges(badges);
-      }).catch(error => {
-        console.error("Failed to fetch dashboard data:", error);
-      }).finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  const isGuest = user?.isAnonymous;
-
-  const renderMainContent = () => {
-    if (isLoading) {
-      return <Card className="lg:col-span-2 h-48 flex items-center justify-center"><p>Loading your progress...</p></Card>;
-    }
-    if (inProgressModules.length > 0) {
-      return <ContinueLearning modules={inProgressModules} />;
-    }
-    return <StartFirstPath />;
-  };
-
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">
-          Welcome back{isGuest ? ", Guest" : ""}!
-        </h1>
-        <p className="text-muted-foreground">
-          Let's continue your journey to becoming a trading master.
-        </p>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {renderMainContent()}
-        <ProfileCard userProfile={userProfile} badges={earnedBadges} />
-      </div>
-    </div>
-  );
-};
 
 export default DashboardPage;
