@@ -1,20 +1,34 @@
 import React, { useState } from 'react';
-import TradingViewWidget from '../components/trading/TradingViewWidget';
+import { TradingProvider, useTradingContext } from '../hooks/useTradingContextProvider';
+import TradingViewWidget from '../components/trading/TradingViewWidget'; // <-- Back to the original widget
 import TradePanel from '../components/trading/TradePanel';
 import PositionsPanel from '../components/trading/PositionsPanel';
 import { Card, CardContent } from '../components/ui/Card';
+import { useAuth } from '../hooks/useAuth';
+import { addTrade } from '../lib/firestoreService';
+import { toast } from 'react-hot-toast';
 
-const SimulatorPage = () => {
+const SimulatorContent = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('NASDAQ:AAPL');
+  const { user } = useAuth();
+
+  const handlePlaceOrder = async (tradeDetails) => {
+    if (!user) {
+      toast.error('You must be logged in to trade.');
+      return;
+    }
+    try {
+      await addTrade(user.uid, tradeDetails);
+      toast.success('Trade placed successfully!');
+    } catch (error) {
+      toast.error(error.message || 'Failed to place trade.');
+      console.error(error);
+    }
+  };
 
   return (
-    // Use a full-height flex container for robust layout
     <div className="container mx-auto px-6 py-8 h-full flex flex-col gap-8">
-      
-      {/* Top Row: This part will grow to fill available space */}
       <div className="flex-grow grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-0">
-        
-        {/* TradingView Chart */}
         <div className="lg:col-span-2 h-full">
           <Card className="h-full flex flex-col">
             <CardContent className="p-0 flex-grow">
@@ -22,23 +36,24 @@ const SimulatorPage = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Trading Panel */}
         <div className="lg:col-span-1 h-full">
           <TradePanel 
             selectedSymbol={selectedSymbol} 
-            onSymbolChange={setSelectedSymbol} 
+            onSymbolChange={setSelectedSymbol}
+            onPlaceOrder={handlePlaceOrder}
           />
         </div>
       </div>
-
-      {/* Bottom Row: This part has a fixed height and will not shrink */}
       <div className="flex-shrink-0 h-64"> 
-        <PositionsPanel />
+        <PositionsPanel onSymbolSelect={setSelectedSymbol} />
       </div>
-
     </div>
   );
+};
+
+const SimulatorPage = () => {
+  // The TradingProvider is now only in App.jsx, which is correct.
+  return <SimulatorContent />;
 };
 
 export default SimulatorPage;

@@ -1,30 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ROADMAP_DATA, CHAPTERS } from '../lib/mockData'; // <-- Correct import
 import { Card, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { getModuleById, getChaptersForModule } from '../lib/firestoreService';
 
 const ModuleDetailPage = () => {
   const { pathId, moduleId } = useParams();
-  
-  // Find the specific module by searching through the new ROADMAP_DATA structure
-  let moduleInfo;
-  const pathData = ROADMAP_DATA[pathId];
-  if (pathData) {
-    if (pathData.categories) { // Fundamental path
-      for (const category of pathData.categories) {
-        const foundModule = category.modules.find(m => m.id === moduleId);
-        if (foundModule) {
-          moduleInfo = foundModule;
-          break;
+  const [moduleInfo, setModuleInfo] = useState(null);
+  const [chapters, setChapters] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchModuleData = async () => {
+      try {
+        setLoading(true);
+        const moduleData = await getModuleById(pathId, moduleId);
+        setModuleInfo(moduleData);
+        if (moduleData) {
+          const chaptersData = await getChaptersForModule(pathId, moduleId);
+          setChapters(chaptersData);
         }
+      } catch (error) {
+        console.error("Failed to fetch module details:", error);
+      } finally {
+        setLoading(false);
       }
-    } else { // Specialization paths
-      moduleInfo = pathData.modules.find(m => m.id === moduleId);
-    }
+    };
+
+    fetchModuleData();
+  }, [pathId, moduleId]);
+
+  if (loading) {
+    return <div>Loading module...</div>;
   }
-  
-  const chapters = CHAPTERS[moduleId] || [];
 
   if (!moduleInfo) {
     return <div>Module not found.</div>;
@@ -33,8 +41,8 @@ const ModuleDetailPage = () => {
   return (
     <div className="space-y-8">
       <div>
-        <Link to={`/roadmap`} className="text-sm text-primary hover:underline">
-          &larr; Back to Roadmap
+        <Link to={`/learn/${pathId}`} className="text-sm text-primary hover:underline">
+          &larr; Back to Learning Path
         </Link>
         <h1 className="text-4xl font-bold mt-2">{moduleInfo.title}</h1>
         <p className="text-lg text-muted-foreground">

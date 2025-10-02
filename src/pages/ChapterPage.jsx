@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ROADMAP_DATA, CHAPTERS } from '../lib/mockData';
-import { getChapterContent, completeModuleForUser, addXP, awardBadge } from '../lib/firestoreService';
+import { getModuleById, getChaptersForModule, getChapterContent, completeModuleForUser, addXP, awardBadge } from '../lib/firestoreService';
 import { useAuth } from '../hooks/useAuth';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
-import Quiz from '../components/learning/Quiz'; // Assuming quiz logic stays mock for now
+import Quiz from '../components/learning/Quiz';
 import { BADGES } from '../lib/badges';
 
 const ChapterPage = () => {
@@ -13,56 +12,75 @@ const ChapterPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Static data from mock files
-  const moduleInfo = Object.values(ROADMAP_DATA).flatMap(p => p.categories ? p.categories.flatMap(c => c.modules) : p.modules).find(m => m.id === moduleId);
-  const chaptersInModule = CHAPTERS[moduleId] || [];
-  const chapterData = chaptersInModule.find(c => c.id === chapterId);
-
-  // Dynamic content from Firestore
-  const [content, setContent] = useState(null);
+  const [moduleInfo, setModuleInfo] = useState(null);
+  const [chaptersInModule, setChaptersInModule] = useState([]);
+  const [chapterContent, setChapterContent] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    setIsLoading(true);
-    getChapterContent(chapterId)
-      .then(data => {
-        setContent(data?.content || null);
-      })
-      .catch(error => {
-        console.error("Failed to fetch chapter content:", error);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [chapterId]);
+  const fetchChapterData = useCallback(async () => {
+    if (!user) return;
+    try {
+      setIsLoading(true);
+      const [modInfo, chapsInMod, chapContent] = await Promise.all([
+        getModuleById(pathId, moduleId),
+        getChaptersForModule(pathId, moduleId),
+        getChapterContent(chapterId)
+      ]);
+      setModuleInfo(modInfo);
+      setChaptersInModule(chapsInMod);
+      setChapterContent(chapContent);
+    } catch (error) {
+      console.error("Failed to fetch chapter data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [pathId, moduleId, chapterId, user]);
 
-  // Navigation logic
+  useEffect(() => {
+    fetchChapterData();
+  }, [fetchChapterData]);
+
   const currentChapterIndex = chaptersInModule.findIndex(c => c.id === chapterId);
+  const chapterData = chaptersInModule[currentChapterIndex];
   const isLastChapter = currentChapterIndex === chaptersInModule.length - 1;
   const prevChapter = currentChapterIndex > 0 ? chaptersInModule[currentChapterIndex - 1] : null;
   const nextChapter = !isLastChapter ? chaptersInModule[currentChapterIndex + 1] : null;
 
-  const handleCompleteModule = async () => { /* ... (no changes here) */ };
-
-  if (!moduleInfo) return <div>Module not found.</div>;
+  const handleCompleteModule = async () => {
+    if (!user || !moduleInfo) return;
+    try {
+      await completeModuleForUser(user.uid, moduleId);
+      await addXP(user.uid, 50); // XP for completing a module
+      
+      const badgeToAward = BADGES.find(b => b.modules.includes(moduleId));
+      if (badgeToAward) {
+        await awardBadge(user.uid, badgeToAward.id);
+      }
+      
+      alert(`Module "${moduleInfo.title}" completed!`);
+      navigate(`/learn/${pathId}`);
+    } catch (error) {
+      console.error("Failed to complete module:", error);
+      alert("There was an error completing the module.");
+    }
+  };
 
   const renderContent = () => {
     if (isLoading) {
       return <Card><CardContent className="p-8">Loading content...</CardContent></Card>;
     }
     
-    // For now, quiz logic remains tied to mock data
-    if (chapterData?.type === 'quiz') {
-      const quizData = QUIZZES[CHAPTER_CONTENT[chapterId].quizId];
-      return <Quiz quizData={quizData} onComplete={handleCompleteModule} />;
+    if (chapterData?.type === 'quiz' && chapterContent?.quizId) {
+      // Assuming a Quiz component that fetches its own data based on quizId
+      return <Quiz quizId={chapterContent.quizId} onComplete={handleCompleteModule} />;
     }
 
-    if (content) {
+    if (chapterContent?.content) {
       return (
         <Card>
           <CardContent className="p-8 prose dark:prose-invert max-w-none">
             <h1>{chapterData?.title}</h1>
-            <p>{content}</p>
+            <div dangerouslySetInnerHTML={{ __html: chapterContent.content }} />
           </CardContent>
         </Card>
       );
@@ -81,7 +99,7 @@ const ChapterPage = () => {
   return (
     <div className="space-y-6">
       <Link to={`/learn/${pathId}/${moduleId}`} className="text-sm text-primary hover:underline">
-        &larr; Back to Chapters in "{moduleInfo.title}"
+        &larr; Back to Chapters in "{moduleInfo?.title || 'Module'}"
       </Link>
       
       {renderContent()}

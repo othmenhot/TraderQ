@@ -2,11 +2,14 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
-import { ErrorBoundary } from 'react-error-boundary'; // Import from the library
+import { ErrorBoundary } from 'react-error-boundary';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import './index.css';
 
-// A simple fallback component to display when an error occurs
+// Create a client
+const queryClient = new QueryClient();
+
 const ErrorFallback = ({ error, resetErrorBoundary }) => (
   <div role="alert" className="p-4">
     <p>Something went wrong:</p>
@@ -16,19 +19,18 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => (
 );
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <BrowserRouter>
       <ErrorBoundary
         FallbackComponent={ErrorFallback}
-        onReset={() => {
-          // You could add logic here to reset the app's state if needed
-          window.location.reload();
-        }}
+        onReset={() => window.location.reload()}
       >
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </QueryClientProvider>
       </ErrorBoundary>
     </BrowserRouter>
-  </React.StrictMode>
+  // </React.StrictMode>
 );

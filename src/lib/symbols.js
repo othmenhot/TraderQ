@@ -6,6 +6,8 @@ export const SYMBOL_GROUPS = {
     "Commodities": ["OANDA:XAUUSD", "OANDA:XAGUSD", "TVC:USOIL"],
 };
 
+export const SYMBOLS = Object.values(SYMBOL_GROUPS).flat();
+
 // Mocked prices for the simulator - keys must match the symbols above
 export const MOCKED_PRICES = {
     // Stocks

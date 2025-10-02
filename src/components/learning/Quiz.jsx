@@ -1,13 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/Card';
 import { cn } from '../../lib/utils';
+import { getQuizById } from '../../lib/firestoreService';
 
-const Quiz = ({ quizData, onComplete }) => {
+const Quiz = ({ quizId, onComplete }) => {
+  const [quizData, setQuizData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [activeQuestion, setActiveQuestion] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState({});
   const [isFinished, setIsFinished] = useState(false);
   const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    const fetchQuiz = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getQuizById(quizId);
+        setQuizData(data);
+      } catch (error) {
+        console.error("Failed to fetch quiz:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (quizId) {
+      fetchQuiz();
+    }
+  }, [quizId]);
+
+  if (isLoading || !quizData) {
+    return <Card><CardContent>Loading quiz...</CardContent></Card>;
+  }
 
   const currentQuestion = quizData.questions[activeQuestion];
 
@@ -19,7 +43,6 @@ const Quiz = ({ quizData, onComplete }) => {
     if (activeQuestion < quizData.questions.length - 1) {
       setActiveQuestion(prev => prev + 1);
     } else {
-      // Finish the quiz and calculate score
       let finalScore = 0;
       quizData.questions.forEach(q => {
         if (selectedAnswers[q.id] === q.correctAnswer) {
@@ -28,7 +51,7 @@ const Quiz = ({ quizData, onComplete }) => {
       });
       setScore(finalScore);
       setIsFinished(true);
-      onComplete(finalScore / quizData.questions.length); // Pass score percentage
+      onComplete(finalScore / quizData.questions.length);
     }
   };
 

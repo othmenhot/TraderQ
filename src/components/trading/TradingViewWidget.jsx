@@ -1,39 +1,53 @@
 import React, { useEffect, useRef, memo } from 'react';
 
-function TradingViewWidget({ symbol, theme = 'light' }) {
-  const container = useRef();
+const TradingViewWidget = memo(({ symbol }) => {
+  const container = useRef(null);
+  const widgetRef = useRef(null);
 
   useEffect(() => {
-    container.current.innerHTML = ''; // Clear previous widget on symbol or theme change
+    if (!container.current) {
+      return;
+    }
 
-    const script = document.createElement("script");
-    script.src = "https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js";
-    script.type = "text/javascript";
-    script.async = true;
-
-    // Use JSON.stringify for robust settings generation
-    const widgetConfig = {
-      "autosize": true,
-      "symbol": symbol,
-      "interval": "D",
-      "timezone": "Etc/UTC",
-      "theme": theme,
-      "style": "1",
-      "locale": "en",
-      "enable_publishing": false,
-      "allow_symbol_change": false,
-      "calendar": false,
-      "support_host": "https://www.tradingview.com"
+    // Define the widget creation function first, so it's always in scope.
+    const createWidget = () => {
+      if (!container.current) return;
+      
+      // Clear any previous widget to prevent duplicates
+      container.current.innerHTML = '';
+      
+      widgetRef.current = new window.TradingView.widget({
+        autosize: true,
+        symbol: symbol,
+        interval: '15',
+        timezone: 'Etc/UTC',
+        theme: 'light',
+        style: '1',
+        locale: 'en',
+        enable_publishing: false,
+        allow_symbol_change: false,
+        container_id: container.current.id,
+      });
     };
 
-    script.innerHTML = JSON.stringify(widgetConfig);
-    container.current.appendChild(script);
+    // Check if the TradingView script is already loaded.
+    if (window.TradingView) {
+      createWidget();
+    } else {
+      // If not, create and load the script.
+      // This part will only run once in the component's lifecycle.
+      const script = document.createElement('script');
+      script.src = 'https://s3.tradingview.com/tv.js';
+      script.async = true;
+      script.onload = createWidget; // Assign the defined function to onload
+      document.head.appendChild(script);
+    }
 
-  }, [symbol, theme]); // Re-run effect if symbol or theme changes
+  }, [symbol]); // Re-run the effect when the symbol changes
 
   return (
-    <div className="tradingview-widget-container" ref={container} style={{ height: "100%", width: "100%" }} />
+    <div id="tradingview-widget-container" ref={container} style={{ height: '100%', width: '100%' }} />
   );
-}
+});
 
-export default memo(TradingViewWidget);
+export default TradingViewWidget;
