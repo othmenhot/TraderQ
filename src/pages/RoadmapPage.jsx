@@ -20,14 +20,8 @@ const ModuleCard = ({ module, userXp, pathId }) => {
   
   return (
     <div className="relative pl-10">
-      {/* The connecting line */}
       <div className="absolute left-4 top-0 h-full w-0.5 bg-border -translate-x-1/2"></div>
-      {/* The dot on the line */}
-      <div className={cn(
-        "absolute left-4 top-4 h-3 w-3 rounded-full -translate-x-1/2",
-        isLocked ? "bg-muted" : "bg-primary"
-      )}></div>
-      
+      <div className={cn("absolute left-4 top-4 h-3 w-3 rounded-full -translate-x-1/2", isLocked ? "bg-muted" : "bg-primary")}></div>
       <Card className={cn("mb-8", isLocked && "bg-muted/50 opacity-70")}>
         <CardContent className="p-4 flex items-center justify-between">
           <div>
@@ -53,7 +47,6 @@ const SpecializationCard = ({ path }) => (
       <CardDescription>{path.description}</CardDescription>
     </CardHeader>
     <CardContent>
-      {/* In the future, this button would link to the path's own roadmap */}
       <Button variant="secondary" className="w-full" disabled>Coming Soon</Button>
     </CardContent>
   </Card>
@@ -67,14 +60,12 @@ const RoadmapPage = () => {
 
   const fundamentalPath = ROADMAP_DATA['trader-path'];
   const specializationPaths = Object.values(ROADMAP_DATA).filter(p => p.type === 'specialization');
-
-  // Check if the user has enough XP to unlock specializations
-  const totalFundamentalXp = 600; // 0+100+200+300+400+500
-  const specializationsUnlocked = userXp >= totalFundamentalXp;
+  
+  const totalFundamentalXpRequired = 600; 
+  const specializationsUnlocked = userXp >= totalFundamentalXpRequired;
 
   return (
-    <div className="space-y-12">
-      {/* Section 1: Fundamental Path */}
+    <div className="space-y-12 animate-fade-in">
       <section>
         <div className="text-center mb-10">
           <h1 className="text-4xl font-bold">{fundamentalPath.name}</h1>
@@ -91,17 +82,13 @@ const RoadmapPage = () => {
         ))}
       </section>
 
-      {/* Section 2: Specializations */}
       <section className="relative text-center p-8 border-t">
         <h2 className="text-3xl font-bold">Choose Your Career Path</h2>
         <p className="text-muted-foreground mb-8">
-          {specializationsUnlocked ? "You've mastered the basics. Now, choose your specialization." : `Complete the Trader's Path (${userXp}/${totalFundamentalXp} XP) to unlock these careers.`}
+          {specializationsUnlocked ? "You've mastered the basics. Now, choose your specialization." : `Complete The Trader's Path (${userXp}/${totalFundamentalXpRequired} XP) to unlock these careers.`}
         </p>
         
-        <div className={cn(
-          "grid grid-cols-1 md:grid-cols-3 gap-6 transition-opacity",
-          !specializationsUnlocked && "opacity-40"
-        )}>
+        <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-6", !specializationsUnlocked && "opacity-40")}>
           {specializationPaths.map(path => (
             <SpecializationCard key={path.id} path={path} />
           ))}

@@ -4,11 +4,12 @@ import Header from './Header';
 
 const MainLayout = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       <Header />
-      <main className="container mx-auto px-6 py-8">
+      <main className="flex-grow">
         <Outlet /> 
       </main>
+      {/* AppFooter removed */}
     </div>
   );
 };

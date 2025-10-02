@@ -49,7 +49,6 @@ export const seedDatabase = async () => {
     // 3. Seed Chapter Content
     for (const chapterId in CHAPTER_CONTENT) {
       const contentData = CHAPTER_CONTENT[chapterId];
-      // Note: This assumes you have Firestore rules allowing write access to 'chapter_content'
       const contentRef = doc(db, 'chapter_content', chapterId);
       batch.set(contentRef, {
         type: contentData.type,
@@ -58,7 +57,6 @@ export const seedDatabase = async () => {
       });
     }
 
-    // Commit all writes at once
     await batch.commit();
     alert('Database seeded successfully!');
   } catch (error) {

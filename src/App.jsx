@@ -1,25 +1,32 @@
 import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
+import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from 'react-error-boundary';
 
-// Layouts & Pages
+// Layouts
+import LandingLayout from './components/layout/LandingLayout';
 import MainLayout from './components/layout/MainLayout';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+
+// Pages
+import HomePage from './pages/HomePage';
+import FeaturesPage from './pages/FeaturesPage';
+import PricingPage from './pages/PricingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import RoadmapPage from './pages/RoadmapPage';
+import SimulatorPage from './pages/SimulatorPage';
 import ModuleDetailPage from './pages/ModuleDetailPage';
 import ChapterPage from './pages/ChapterPage';
 import AdminPage from './pages/AdminPage';
-import ThemeToggle from './components/ui/ThemeToggle';
 
-const HomePage = () => (
-  <div className="text-center">
-    <h1 className="text-4xl font-bold mb-4">Welcome to Trader Quest!</h1>
-    <p className="text-xl text-muted-foreground">
-      Your journey to mastering the art of trading starts here.
-    </p>
+// Simple fallback component for the error boundary
+const ErrorFallback = ({ error }) => (
+  <div role="alert" className="p-4">
+    <p>Something went wrong:</p>
+    <pre style={{ color: 'red' }}>{error.message}</pre>
   </div>
 );
 
@@ -27,27 +34,39 @@ const App = () => {
   const { loading } = useAuth();
 
   if (loading) {
-    return <div className="min-h-screen bg-background text-foreground flex items-center justify-center">Loading application...</div>;
+    return (
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
+        Loading application...
+      </div>
+    );
   }
 
   return (
-    <>
-      <ThemeToggle />
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <Toaster position="bottom-right" />
       <Routes>
-        <Route element={<MainLayout />}>
+        {/* Public Routes */}
+        <Route element={<LandingLayout />}>
           <Route path="/" element={<HomePage />} />
-          <Route element={<ProtectedRoute />}>
+          <Route path="/features" element={<FeaturesPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
+
+        {/* Protected App Routes */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/roadmap" element={<RoadmapPage />} />
+            <Route path="/simulator" element={<SimulatorPage />} />
             <Route path="/learn/:pathId/:moduleId" element={<ModuleDetailPage />} />
             <Route path="/learn/:pathId/:moduleId/:chapterId" element={<ChapterPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Route>
         </Route>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
       </Routes>
-    </>
+    </ErrorBoundary>
   );
 };
 
